@@ -3,7 +3,6 @@ import Icon from "@/components/ui/icon";
 
 interface Props {
   isOnline: boolean;
-  isAdult: boolean;
 }
 
 const stats = [
@@ -19,7 +18,7 @@ const recentActivity = [
   { app: "TikTok", action: "Разблокировано", time: "1 ч", color: "#f472b6" },
 ];
 
-const HomeScreen = ({ isOnline, isAdult }: Props) => {
+const HomeScreen = ({ isOnline }: Props) => {
   const [notificationsOn, setNotificationsOn] = useState(true);
 
   return (
@@ -28,9 +27,7 @@ const HomeScreen = ({ isOnline, isAdult }: Props) => {
       <div className="flex items-center justify-between animate-fade-in">
         <div>
           <p className="text-xs text-white/40 font-medium tracking-widest uppercase">Добро пожаловать</p>
-          <h1 className="text-2xl font-bold gradient-text-warm mt-0.5">
-            NovVPN {!isAdult && <span className="text-sm font-medium text-cyan-400 ml-1">👶 Детский</span>}
-          </h1>
+          <h1 className="text-2xl font-bold gradient-text-warm mt-0.5">NovVPN</h1>
         </div>
         <button
           className="tap-effect relative w-10 h-10 rounded-2xl glass flex items-center justify-center"
@@ -46,24 +43,6 @@ const HomeScreen = ({ isOnline, isAdult }: Props) => {
           )}
         </button>
       </div>
-
-      {/* Kids mode banner */}
-      {!isAdult && (
-        <div
-          className="rounded-2xl px-4 py-3 flex items-center gap-3 animate-fade-in"
-          style={{
-            background: "linear-gradient(135deg, rgba(34,211,238,0.12) 0%, rgba(168,85,247,0.12) 100%)",
-            border: "1px solid rgba(34,211,238,0.25)",
-          }}
-        >
-          <Icon name="Baby" size={18} className="text-cyan-400 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-cyan-300 text-xs font-semibold">Детский безопасный режим</p>
-            <p className="text-white/40 text-xs">Взрослый контент заблокирован</p>
-          </div>
-          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-        </div>
-      )}
 
       {/* Status Card */}
       <div

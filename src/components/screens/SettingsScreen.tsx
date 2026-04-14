@@ -65,7 +65,12 @@ const SettingSection = ({ title, children }: { title: string; children: React.Re
   </div>
 );
 
-const SettingsScreen = () => {
+interface SettingsProps {
+  isAdult: boolean;
+  onAdultChange: (v: boolean) => void;
+}
+
+const SettingsScreen = ({ isAdult, onAdultChange }: SettingsProps) => {
   const [killSwitch, setKillSwitch] = useState(true);
   const [autoConnect, setAutoConnect] = useState(true);
   const [dnsLeak, setDnsLeak] = useState(true);
@@ -75,6 +80,50 @@ const SettingsScreen = () => {
   const [offlineMode, setOfflineMode] = useState(true);
   const [autoSync, setAutoSync] = useState(true);
   const [protocol, setProtocol] = useState("WireGuard");
+
+  // Kids mode
+  const [kidsMode, setKidsMode] = useState(!isAdult);
+  const [blockAdult, setBlockAdult] = useState(true);
+  const [blockGambling, setBlockGambling] = useState(true);
+  const [blockSocial, setBlockSocial] = useState(false);
+  const [safeSearch, setSafeSearch] = useState(true);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
+  const [pinSet, setPinSet] = useState(false);
+  const [pinValue, setPinValue] = useState("");
+
+  const CORRECT_PIN = "1234";
+
+  const handleKidsModeToggle = (v: boolean) => {
+    if (!v && pinSet) {
+      setShowPinModal(true);
+      return;
+    }
+    setKidsMode(v);
+    onAdultChange(!v);
+  };
+
+  const handlePinSubmit = () => {
+    if (pin === CORRECT_PIN || pin === pinValue) {
+      setPinError(false);
+      setPin("");
+      setShowPinModal(false);
+      setKidsMode(false);
+      onAdultChange(true);
+    } else {
+      setPinError(true);
+      setPin("");
+      setTimeout(() => setPinError(false), 800);
+    }
+  };
+
+  const handleSetPin = () => {
+    if (pinValue.length === 4) {
+      setPinSet(true);
+      setPinValue(pinValue);
+    }
+  };
 
   const protocols = ["WireGuard", "OpenVPN", "IKEv2", "Shadowsocks"];
 
@@ -189,6 +238,138 @@ const SettingsScreen = () => {
           right={<Toggle value={autoSync} onChange={setAutoSync} />}
         />
       </SettingSection>
+
+      {/* Kids Protection */}
+      <SettingSection title="Детская защита">
+        <SettingRow
+          icon="Baby"
+          iconColor="#22d3ee"
+          label="Детский режим"
+          description={kidsMode ? "Включён — контент фильтруется" : "Выключен — доступ без ограничений"}
+          right={<Toggle value={kidsMode} onChange={handleKidsModeToggle} color="#22d3ee" />}
+        />
+        {kidsMode && (
+          <>
+            <SettingRow
+              icon="ShieldX"
+              iconColor="#ef4444"
+              label="Блокировка 18+ контента"
+              description="Сайты для взрослых"
+              right={<Toggle value={blockAdult} onChange={setBlockAdult} color="#ef4444" />}
+            />
+            <SettingRow
+              icon="Dices"
+              iconColor="#f472b6"
+              label="Блокировка азартных игр"
+              description="Казино, ставки, лотереи"
+              right={<Toggle value={blockGambling} onChange={setBlockGambling} color="#f472b6" />}
+            />
+            <SettingRow
+              icon="MessagesSquare"
+              iconColor="#a855f7"
+              label="Ограничить соцсети"
+              description="Instagram, TikTok, Twitter"
+              right={<Toggle value={blockSocial} onChange={setBlockSocial} />}
+            />
+            <SettingRow
+              icon="Search"
+              iconColor="#22d3ee"
+              label="Безопасный поиск"
+              description="Google SafeSearch принудительно"
+              right={<Toggle value={safeSearch} onChange={setSafeSearch} color="#22d3ee" />}
+            />
+            <div className="px-4 pb-4 pt-1">
+              {!pinSet ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-white/40">Установить PIN для защиты настроек</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      maxLength={4}
+                      placeholder="4 цифры"
+                      value={pinValue}
+                      onChange={(e) => setPinValue(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      className="flex-1 rounded-2xl px-3 py-2.5 text-white text-sm font-bold outline-none text-center tracking-widest"
+                      style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    />
+                    <button
+                      onClick={handleSetPin}
+                      disabled={pinValue.length !== 4}
+                      className="tap-effect px-4 py-2.5 rounded-2xl text-white text-sm font-semibold transition-opacity"
+                      style={{
+                        background: "linear-gradient(135deg, #a855f7, #22d3ee)",
+                        opacity: pinValue.length !== 4 ? 0.4 : 1,
+                      }}
+                    >
+                      Сохранить
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-2xl px-3 py-2"
+                  style={{ background: "rgba(34,211,238,0.08)", border: "1px solid rgba(34,211,238,0.2)" }}>
+                  <Icon name="Lock" size={14} className="text-cyan-400" />
+                  <span className="text-cyan-400 text-xs font-medium">PIN-защита установлена</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </SettingSection>
+
+      {/* PIN modal */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-w-[390px] rounded-t-3xl p-6 space-y-4 animate-slide-up"
+            style={{ background: "linear-gradient(160deg, #0d0d1f, #10061e)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ background: "rgba(168,85,247,0.2)" }}>
+                <Icon name="Lock" size={20} className="text-purple-400" />
+              </div>
+              <div>
+                <p className="text-white font-bold">Введите PIN</p>
+                <p className="text-white/40 text-xs">Для отключения детского режима</p>
+              </div>
+            </div>
+            <input
+              type="password"
+              maxLength={4}
+              placeholder="• • • •"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => e.key === "Enter" && handlePinSubmit()}
+              autoFocus
+              className="w-full rounded-2xl px-4 py-4 text-center text-white text-2xl font-bold outline-none tracking-widest transition-all"
+              style={{
+                background: pinError ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.07)",
+                border: pinError ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.12)",
+              }}
+            />
+            {pinError && (
+              <div className="flex items-center justify-center gap-2 animate-fade-in">
+                <Icon name="AlertCircle" size={14} className="text-red-400" />
+                <span className="text-red-400 text-sm">Неверный PIN</span>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowPinModal(false); setPin(""); }}
+                className="tap-effect flex-1 py-3.5 rounded-2xl text-white/60 font-semibold text-sm"
+                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                Отмена
+              </button>
+              <button
+                onClick={handlePinSubmit}
+                className="tap-effect flex-1 py-3.5 rounded-2xl text-white font-bold text-sm"
+                style={{ background: "linear-gradient(135deg, #a855f7, #22d3ee)" }}>
+                Подтвердить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interface */}
       <SettingSection title="Интерфейс">
